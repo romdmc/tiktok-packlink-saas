@@ -1,0 +1,54 @@
+databases:
+  - name: saas-db
+    databaseName: saasdb
+    user: saasuser
+
+services:
+  # API service
+  - type: web
+    name: saas-api
+    env: node
+    rootDir: api
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      # Connection string is automatically injected from the database created above
+      - key: DATABASE_URL
+        fromDatabase:
+          name: saas-db
+          property: connectionString
+      # URL of the frontend service (used for Stripe success/cancel URLs)
+      - key: FRONTEND_URL
+        value: https://saas-web.onrender.com
+      # JWT secret used to sign tokens (you should override this with a strong secret)
+      - key: JWT_SECRET
+        value: changeme
+      # TikTok Open Platform credentials (override with real keys)
+      - key: TIKTOK_CLIENT_KEY
+        sync: false
+      - key: TIKTOK_CLIENT_SECRET
+        sync: false
+      - key: TIKTOK_REDIRECT_URI
+        value: https://saas-api.onrender.com/api/auth/tiktok/callback
+      # Stripe credentials and pricing IDs (override with real values)
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_ID
+        sync: false
+      - key: STRIPE_METERED_PRICE_ID
+        sync: false
+  # Frontend service
+  - type: web
+    name: saas-web
+    env: node
+    rootDir: web
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      # API URL of the backend service.  Set to the Render subdomain of the saas-api service.
+      - key: NEXT_PUBLIC_API_URL
+        value: https://saas-api.onrender.com
